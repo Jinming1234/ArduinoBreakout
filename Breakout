@@ -55,6 +55,45 @@ const int16_t TS_LEFT = 122, TS_RT = 929, TS_TOP = 77, TS_BOT = 884;
 
 const TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
 
+typedef structure gyroscope {
+#include<Wire.h>
+const int MPU=0x68; 
+int16_t AcX,AcY,AcZ,Tmp,GyX,GyY,GyZ;
+
+void setup(){
+  Wire.begin();
+  Wire.beginTransmission(MPU);
+  Wire.write(0x6B); 
+  Wire.write(0);    
+  Wire.endTransmission(true);
+  Serial.begin(9600);
+}
+void loop(){
+  Wire.beginTransmission(MPU);
+  Wire.write(0x3B);  
+  Wire.endTransmission(false);
+  Wire.requestFrom(MPU,12,true);  
+  AcX=Wire.read()<<8|Wire.read();    
+  AcY=Wire.read()<<8|Wire.read();  
+  AcZ=Wire.read()<<8|Wire.read();  
+  GyX=Wire.read()<<8|Wire.read();  
+  GyY=Wire.read()<<8|Wire.read();  
+  GyZ=Wire.read()<<8|Wire.read();  
+  
+  Serial.print("Accelerometer: ");
+  Serial.print("X = "); Serial.print(AcX);
+  Serial.print(" | Y = "); Serial.print(AcY);
+  Serial.print(" | Z = "); Serial.println(AcZ); 
+  
+  Serial.print("Gyroscope: ");
+  Serial.print("X = "); Serial.print(GyX);
+  Serial.print(" | Y = "); Serial.print(GyY);
+  Serial.print(" | Z = "); Serial.println(GyZ);
+  Serial.println(" ");
+  delay(333);
+}
+}
+
 
 #define SCORE_SIZE 30
 
@@ -212,7 +251,7 @@ void newGame(game_type* newGame, game_state_type * state,  Adafruit_TFTLCD &tft)
 
   setupWall(game, state);
 
-  touchToStart();
+  MoveToStart();
 
   clearDialog(gameSize);
   updateLives(game->lives, state->remainingLives);
@@ -323,16 +362,16 @@ void drawBall(int x, int y, int xold, int yold, int ballsize) {
 
 }
 
-void touchToStart() {
+void MoveToStart() {
   drawBoxedString(0, 200, "   BREAKOUT", 3, YELLOW, BLACK);
-  drawBoxedString(0, 240, "    TOUCH TO START", 2, RED, BLACK);
-  while (waitForTouch() < 0) {}
+  drawBoxedString(0, 240, "    MOVE TO START", 2, RED, BLACK);
+  while (waitForMove() < 0) {}
 }
 
-void gameOverTouchToStart() {
+void gameOverMoveToStart() {
   drawBoxedString(0, 180, "  GAME OVER", 3, YELLOW, BLACK);
-  drawBoxedString(0, 220, "  TOUCH TO START", 2, RED, BLACK);
-  while (waitForTouch() < 0) {}
+  drawBoxedString(0, 220, "  MOVE TO START", 2, RED, BLACK);
+  while (waitForMove() < 0) {}
 }
 
 
@@ -530,7 +569,7 @@ int readUiSelection(game_type * game, game_state_type * state, const int16_t las
 }
 
 
-int waitForTouch() {
+int waitForMove() {
   int16_t xpos, ypos;  //screen coordinates
   TSPoint tp = ts.getPoint();   //tp.x, tp.y are ADC values
 
